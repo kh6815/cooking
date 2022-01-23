@@ -6,10 +6,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -38,6 +35,8 @@ public class Main {
     public static MainFrame mf;
 
     public static JPanel panel, panel2, panel3;
+
+    public static int barSize = 195;
 
     public static void main(String args[]) throws IOException {
         //init();
@@ -159,26 +158,25 @@ public class Main {
             setUndecorated(true);
 
             // setTitle("MainFrame")
-            setSize(253, 10);
-            toFront();
-            requestFocus();
+            setSize(barSize, 10);
+            setAlwaysOnTop( true );
             setVisible(true);
 
             panel = new JPanel();
             panel.setBackground(Color.GREEN);
-            panel.setSize(253 * 30 / 100, 10);
+            panel.setSize(barSize * 30 / 100, 10);
             //panel.setSize(0, 0);
             panel.setLocation(0,0);
 
             panel2 = new JPanel();
             panel2.setBackground(Color.red);
-            panel2.setSize(253 * 40 / 100, 10);
+            panel2.setSize(barSize * 40 / 100, 10);
             //panel2.setSize(0, 0);
             panel2.setLocation(0,0);
 
             panel3 = new JPanel();
             panel3.setBackground(Color.blue);
-            panel3.setSize(253 * 100 / 100, 10);
+            panel3.setSize(barSize * 100 / 100, 10);
             //panel3.setSize(0, 0);
             panel3.setLocation(0,0);
 
@@ -230,7 +228,9 @@ public class Main {
         JLabel j6;
         JLabel j7;
 
-        JTextField tf = new JTextField(500);
+        JTextField tf = new JTextField(100);
+
+        Button barLenBtn;
         public SecondFrame()
         {
             setResizable(false);
@@ -269,9 +269,6 @@ public class Main {
             m_List = new JList<String>(m_ListModel);
             m_ScrollPane = new JScrollPane(m_List);
 
-            add(m_ScrollPane);
-            m_ScrollPane.setBounds(10, 60, 250, 400);
-
             for(String strKey : items.keySet()){
                 Set<String> strings = items.get(strKey).get(0).keySet();
                 for (String string : strings) {
@@ -279,7 +276,22 @@ public class Main {
                 }
             }
 
-            j1 = new JLabel("요리 이름 : " + "ㅇㅇㅇ");
+            add(m_ScrollPane);
+            m_ScrollPane.setBounds(10, 60, 250, 400);
+
+            tf.setText(String.valueOf(barSize));
+            add(tf).setBounds(280, 20, 80, 30);
+            barLenBtn = new Button("바 길이 조정");
+            barLenBtn.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    barSize =  Integer.parseInt(tf.getText());
+                    mf.setSize(barSize,10);
+                }
+            });
+            add(barLenBtn).setBounds(370, 20, 100, 30);
+
+           j1 = new JLabel("요리 이름 : ");
             j2 = new JLabel("조리법 : ");
             j3 = new JLabel("재료 : ");
             j4 = new JLabel("재료1");
@@ -326,11 +338,11 @@ public class Main {
                         int second = first + Integer.parseInt(temp[4]);
                         int third = second + Integer.parseInt(temp[5]);
 
-                        panel.setSize(253 * first / 100, 10);
+                        panel.setSize(barSize * first / 100, 10);
 
-                        panel2.setSize(253 * second / 100, 10);
+                        panel2.setSize(barSize * second / 100, 10);
 
-                        panel3.setSize(253 * third / 100, 10);
+                        panel3.setSize(barSize * third / 100, 10);
 
                         //return;
                     }
