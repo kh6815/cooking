@@ -84,8 +84,6 @@ public class Main {
         items.put("발효 (3랭크 이상)", itemList14);
         items.put("수비드 (2랭크 이상)", itemList15);
         items.put("저미기 (1랭크 이상)", itemList16);
-
-        System.out.println(items);
     }
     public static void init() throws IOException {
         File iniFile = new File("recipe.ini");
