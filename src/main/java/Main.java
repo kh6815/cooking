@@ -3,6 +3,7 @@ import org.ini4j.Profile;
 import org.ini4j.Wini;
 
 import javax.swing.*;
+import javax.swing.border.BevelBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -45,18 +46,6 @@ public class Main {
         mf = new MainFrame();
 
         SecondFrame f = new SecondFrame();
-
-        /*
-        Point initialClick; // 마우스의 x, y 좌표를 저장하기 위해 선언
-        JFrame j = new JFrame();
-        j.setResizable(false); // 크기 변경 불가능하도록 함
-        j.setUndecorated(true);
-        j.setSize(300,300);
-        j.setVisible(true);
-        j.addMouseListener(new moveWindows()); // 윈도우 이동하기 위해 설정
-        j.addMouseMotionListener(new moveWindows()); // 윈도우 이동하기 위해 설정
-        */
-
     }
 
     public static void select() throws IOException {
@@ -161,24 +150,28 @@ public class Main {
             setSize(barSize, 10);
             setAlwaysOnTop( true );
             setVisible(true);
+            BevelBorder bb = new BevelBorder(BevelBorder.RAISED);
 
             panel = new JPanel();
             panel.setBackground(Color.GREEN);
             panel.setSize(barSize * 30 / 100, 10);
             //panel.setSize(0, 0);
             panel.setLocation(0,0);
+            panel.setBorder(bb);
 
             panel2 = new JPanel();
             panel2.setBackground(Color.red);
             panel2.setSize(barSize * 40 / 100, 10);
             //panel2.setSize(0, 0);
             panel2.setLocation(0,0);
+            panel2.setBorder(bb);
 
             panel3 = new JPanel();
             panel3.setBackground(Color.blue);
             panel3.setSize(barSize * 100 / 100, 10);
             //panel3.setSize(0, 0);
             panel3.setLocation(0,0);
+            panel3.setBorder(bb);
 
             setLayout(null);
             getContentPane().add(panel);
@@ -233,6 +226,7 @@ public class Main {
         Button barLenBtn;
         public SecondFrame()
         {
+            super("하프섭 규우");
             setResizable(false);
             setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
