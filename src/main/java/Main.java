@@ -1,4 +1,5 @@
 import org.ini4j.Ini;
+import org.ini4j.InvalidFileFormatException;
 import org.ini4j.Profile;
 import org.ini4j.Wini;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 public class Main {
     public static Map<String, List<Profile.Section>> items = new HashMap<>();
+    public static List<Profile.Section> barLocation;
     public static List<Profile.Section> itemList1;
     public static List<Profile.Section> itemList2;
     public static List<Profile.Section> itemList3;
@@ -49,6 +51,7 @@ public class Main {
     public static void select() throws IOException {
         File iniFile = new File("recipe.ini");
         Ini ini = new Ini(iniFile);
+        barLocation = ini.getAll("사이드바 위치");
         itemList1 = ini.getAll("혼합 (연습랭크 이상)");
         itemList2 = ini.getAll("굽기 (F랭크 이상)");
         itemList3 = ini.getAll("삶기 (E랭크 이상)");
@@ -146,6 +149,12 @@ public class Main {
 
             // setTitle("MainFrame")
             setSize(barSize, 10);
+            int x = 0, y = 0;
+
+            x = Integer.parseInt((String)barLocation.get(0).get("x"));
+            y = Integer.parseInt((String)barLocation.get(0).get("y"));
+
+            setLocation(x, y);
             setAlwaysOnTop( true );
             setVisible(true);
             BevelBorder bb = new BevelBorder(BevelBorder.RAISED);
@@ -201,6 +210,20 @@ public class Main {
                 int X = thisX + xMoved;
                 int Y = thisY + yMoved;
                 jf.setLocation(X, Y);
+
+                File iniFile = new File("recipe.ini");
+
+                try {
+                    Wini wini = new Wini(iniFile);
+
+                    wini.put("사이드바 위치", "x", "" + X);
+                    wini.put("사이드바 위치", "y", "" + Y);
+
+                    //신규생성
+                    wini.store();
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
             }
         }
     }
@@ -303,10 +326,34 @@ public class Main {
             List<String> list = new ArrayList<>();
 
             for(String strKey : items.keySet()){
-                Set<String> strings = items.get(strKey).get(0).keySet();
-                for (String string : strings) {
-                    //m_ListModel.addElement(string);
-                    list.add(string);
+                try {
+                    Set<String> strings = items.get(strKey).get(0).keySet();
+                    for (String string : strings) {
+                        if(!string.equals("->중복_요리(") && list.contains(string)){
+                            System.out.println(string);
+                            list.add(string + " ->중복_요리(" + strKey + ")");
+
+                            File iniFile = new File("recipe.ini");
+                            Wini wini = new Wini(iniFile);
+                            String value = wini.get(strKey, string);
+                            System.out.println("value = " + value);
+                            wini.remove(strKey,string);
+                            wini.put(strKey, string + " ->중복_요리(" + strKey + ")", value);
+                            wini.store();
+                            //multiList.put(string + " =>중복_요리(" + strKey + ")", strKey);
+
+                            items.get(strKey).get(0).remove(string);
+                            items.get(strKey).get(0).add(string + " ->중복_요리(" + strKey + ")", value);
+                        }else{
+                            list.add(string);
+                        }
+                    }
+                } catch(NullPointerException e){
+
+                } catch (InvalidFileFormatException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
 
@@ -319,38 +366,50 @@ public class Main {
             add(m_ScrollPane);
             m_ScrollPane.setBounds(10, 80, 250, 380);
 
-            tf.setText(String.valueOf(barSize));
-            add(tf).setBounds(280, 10, 80, 30);
-            barLenBtn = new Button("바 길이 조정");
-            barLenBtn.addActionListener(new ActionListener() {
+            //바 길이 조정
+            Action barLenAction = new AbstractAction() {
                 @Override
-                public void actionPerformed(ActionEvent e) {
+                public void actionPerformed(ActionEvent e)
+                {
                     barSize =  Integer.parseInt(tf.getText());
                     mf.setSize(barSize,10);
                 }
-            });
+            };
+            tf.setText(String.valueOf(barSize));
+            add(tf).setBounds(280, 10, 80, 30);
+            tf.addActionListener(barLenAction);
+            barLenBtn = new Button("바 길이 조정");
+            barLenBtn.addActionListener(barLenAction);
             add(barLenBtn).setBounds(370, 10, 100, 30);
 
             //검색 기능
-            add(sf).setBounds(10, 40, 180, 30);
-            searchBtn = new Button("요리 검색");
-            searchBtn.addActionListener(new ActionListener() {
+            Action searchAction = new AbstractAction()
+            {
                 @Override
-                public void actionPerformed(ActionEvent e) {
+                public void actionPerformed(ActionEvent e)
+                {
                     m_ListModel.clear();
                     Set<String> strings;
                     for(String strKey : items.keySet()){
-                        strings = items.get(strKey).get(0).keySet();
-                        for (String string : strings) {
-                            if(string.contains(sf.getText())){
-                                m_ListModel.addElement(string);
+                        try {
+                            strings = items.get(strKey).get(0).keySet();
+                            for (String string : strings) {
+                                if(string.contains(sf.getText())){
+                                    m_ListModel.addElement(string);
+                                }
                             }
+                        }catch (NullPointerException nullPointerException){
+
                         }
                     }
 
                     if(m_ListModel.size() == 0) JOptionPane.showMessageDialog(null, "일치하는 요리가 없습니다.", "요리 검색", JOptionPane.ERROR_MESSAGE);
                 }
-            });
+            };
+            add(sf).setBounds(10, 40, 180, 30);
+            sf.addActionListener(searchAction);
+            searchBtn = new Button("요리 검색");
+            searchBtn.addActionListener(searchAction);
             add(searchBtn).setBounds(190, 40, 80, 30);
 
             j1 = new JLabel("요리 이름 : ");
@@ -366,11 +425,11 @@ public class Main {
             add(j1).setBounds(280, 60, 500, 200);
             add(j2).setBounds(280, 100, 500, 200);
             add(j3).setBounds(280, 140, 500, 200);
-            add(j4).setBounds(350, 140, 500, 200);
+            add(j4).setBounds(350, 220, 500, 50);
             add(j4_).setLocation(350,140);
-            add(j5).setBounds(350, 170, 500, 200);
+            add(j5).setBounds(350, 250, 500, 50);
             add(j5_).setLocation(350,170);
-            add(j6).setBounds(350, 200, 500, 200);
+            add(j6).setBounds(350, 280, 500, 50);
             add(j6_).setLocation(350,200);
             add(j7).setBounds(280, 250, 500, 200);
 
@@ -390,61 +449,71 @@ public class Main {
                 j4.setForeground(Color.black);
                 j5.setForeground(Color.black);
                 j6.setForeground(Color.black);
+
                 for(String strKey : items.keySet()){
-                    if(items.get(strKey).get(0).get(m_List.getSelectedValue()) != null){
-                        String[] temp = String.valueOf(items.get(strKey).get(0).get(m_List.getSelectedValue())).split("[|]");
+                    try{
+                        if(items.get(strKey).get(0).get(m_List.getSelectedValue()) != null){
+                            String[] temp = String.valueOf(items.get(strKey).get(0).get(m_List.getSelectedValue())).split("[|]");
 
-                        j1.setText("요리 이름 : " + m_List.getSelectedValue());
-                        j2.setText("조리법 : " + strKey);
-                        j3.setText("재료 : " );
-                        j4.setText(temp[0] + "(" + temp[3] + "%)");
-                        j5.setText(temp[1] + "(" + temp[4] + "%)");
-                        j6.setText(temp[2] + "(" + temp[5] + "%)");
+                            j1.setText("요리 이름 : " + m_List.getSelectedValue());
+                            j2.setText("조리법 : " + strKey);
+                            j3.setText("재료 : " );
+                            j4.setText(temp[0] + "(" + temp[3] + "%)");
+                            j5.setText(temp[1] + "(" + temp[4] + "%)");
+                            j6.setText(temp[2] + "(" + temp[5] + "%)");
 
-                        /*
-                        for(String key : items.keySet()){
-                            if(items.get(key).get(0).get(temp[0]) != null){
-                                searchEvent(j4, temp[0]);
-                                j4.setForeground(Color.blue);
-                                searchText1 = temp[0];
-                                j4.addMouseListener(mouseAdapter1);
-                                System.out.println("searchText1 = " + searchText1);
-                            }
-                            if(items.get(key).get(0).get(temp[1]) != null){
-                                j5.setForeground(Color.blue);
-                                searchText2 = temp[1];
-                                j5.addMouseListener(mouseAdapter2);
-                                System.out.println("searchText2 = " + searchText2);
-                            }
-                            if(items.get(key).get(0).get(temp[2]) != null){
-                                j6.setForeground(Color.blue);
-                                searchText3 = temp[2];
-                                j6.addMouseListener(mouseAdapter3);
-                                System.out.println("searchText3 = " + searchText3);
-                            }
-                        }*/
 
-                        if(temp.length > 6 ){
-                            j7.setText("효과 : " + temp[6]);
+
+                            ArrayList<String> keyList = new ArrayList<>(items.keySet());
+                            for(int i = 0; i < keyList.size(); i++){
+                                try {
+                                    if(items.get(keyList.get(i)).get(0).get(temp[0]) != null){
+                                        //searchEvent(j4, temp[0]);
+                                        j4.setForeground(Color.blue);
+                                        searchText1 = temp[0];
+                                        j4.addMouseListener(mouseAdapter1);
+                                        //System.out.println("searchText1 = " + searchText1);
+                                    }
+                                    else if(items.get(keyList.get(i)).get(0).get(temp[1]) != null){
+                                        j5.setForeground(Color.blue);
+                                        searchText2 = temp[1];
+                                        j5.addMouseListener(mouseAdapter2);
+                                        //System.out.println("searchText2 = " + searchText2);
+                                    }
+                                    else if(items.get(keyList.get(i)).get(0).get(temp[2]) != null){
+                                        j6.setForeground(Color.blue);
+                                        searchText3 = temp[2];
+                                        j6.addMouseListener(mouseAdapter3);
+                                        //System.out.println("searchText3 = " + searchText3);
+                                    }
+                                }catch (NullPointerException nullPointerException){
+
+                                }
+                            }
+
+                            if(temp.length > 6 ){
+                                j7.setText("효과 : " + temp[6]);
+                            }
+                            else{
+                                j7.setText("효과 : ");
+                            }
+
+                            //System.out.println(mf);
+                            //mf.getContentPane().setBackground(Color.BLUE)
+
+                            int first = Integer.parseInt(temp[3]);
+                            int second = first + Integer.parseInt(temp[4]);
+                            int third = second + Integer.parseInt(temp[5]);
+
+                            panel.setSize(barSize * first / 100, 10);
+
+                            panel2.setSize(barSize * second / 100, 10);
+
+                            panel3.setSize(barSize * third / 100, 10);
+
+                            return;
                         }
-                        else{
-                            j7.setText("효과 : ");
-                        }
-
-                        //System.out.println(mf);
-                        //mf.getContentPane().setBackground(Color.BLUE)
-
-                        int first = Integer.parseInt(temp[3]);
-                        int second = first + Integer.parseInt(temp[4]);
-                        int third = second + Integer.parseInt(temp[5]);
-
-                        panel.setSize(barSize * first / 100, 10);
-
-                        panel2.setSize(barSize * second / 100, 10);
-
-                        panel3.setSize(barSize * third / 100, 10);
-
-                        //return;
+                    }catch (NullPointerException nullPointerException){
                     }
                 }
             }
@@ -462,10 +531,14 @@ public class Main {
             switch (ch.getSelectedItem()) {
                 case "전체 목록" :
                     for(String strKey : items.keySet()){
-                        strings = items.get(strKey).get(0).keySet();
-                        for (String string : strings) {
-                            //m_ListModel.addElement(string);
-                            list.add(string);
+                        try {
+                            strings = items.get(strKey).get(0).keySet();
+                            for (String string : strings) {
+                                //m_ListModel.addElement(string);
+                                list.add(string);
+                            }
+                        } catch(NullPointerException nullPointerException){
+
                         }
                     }
                     break;
